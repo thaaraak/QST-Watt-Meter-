@@ -833,7 +833,7 @@ nominal inductance, magnetically screened</description>
 <instance part="C3" gate="G$1" x="58.42" y="78.74" rot="R180"/>
 <instance part="GND3" gate="1" x="58.42" y="71.12"/>
 <instance part="L1" gate="G$1" x="53.34" y="81.28" rot="R180"/>
-<instance part="5V" gate="1" x="27.94" y="81.28"/>
+<instance part="5V" gate="1" x="35.56" y="81.28"/>
 <instance part="GND" gate="1" x="66.04" y="30.48" rot="R180"/>
 <instance part="OUT" gate="1" x="91.44" y="35.56" rot="R180"/>
 </instances>
@@ -909,7 +909,7 @@ nominal inductance, magnetically screened</description>
 <net name="N$4" class="0">
 <segment>
 <pinref part="L1" gate="G$1" pin="2"/>
-<wire x1="48.26" y1="81.28" x2="30.48" y2="81.28" width="0.1524" layer="91"/>
+<wire x1="48.26" y1="81.28" x2="38.1" y2="81.28" width="0.1524" layer="91"/>
 <pinref part="5V" gate="1" pin="P"/>
 </segment>
 </net>
