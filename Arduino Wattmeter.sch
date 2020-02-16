@@ -4667,6 +4667,9 @@ lower than in bipolar regulators).</description>
 <part name="GND15" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 <part name="J3" library="SparkFun-Connectors" deviceset="CONN_04" device=""/>
 <part name="J5" library="SparkFun-Connectors" deviceset="CONN_04" device=""/>
+<part name="C14" library="SparkFun-Capacitors" deviceset="1.0UF" device="-1206-50V-10%" value="22pF"/>
+<part name="C15" library="SparkFun-Capacitors" deviceset="1.0UF" device="-1206-50V-10%" value="22pF"/>
+<part name="GND12" library="SparkFun-PowerSymbols" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4716,6 +4719,9 @@ lower than in bipolar regulators).</description>
 <instance part="GND15" gate="1" x="-30.48" y="154.94"/>
 <instance part="J3" gate="G$1" x="172.72" y="121.92" rot="R180"/>
 <instance part="J5" gate="G$1" x="-93.98" y="121.92"/>
+<instance part="C14" gate="G$1" x="-17.78" y="101.6" rot="R90"/>
+<instance part="C15" gate="G$1" x="-17.78" y="106.68" rot="R90"/>
+<instance part="GND12" gate="1" x="-22.86" y="96.52"/>
 </instances>
 <busses>
 </busses>
@@ -4822,6 +4828,14 @@ lower than in bipolar regulators).</description>
 <wire x1="-88.9" y1="124.46" x2="-81.28" y2="124.46" width="0.1524" layer="91"/>
 <label x="-78.74" y="124.46" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="C15" gate="G$1" pin="1"/>
+<wire x1="-22.86" y1="106.68" x2="-22.86" y2="101.6" width="0.1524" layer="91"/>
+<pinref part="C14" gate="G$1" pin="1"/>
+<wire x1="-22.86" y1="101.6" x2="-22.86" y2="99.06" width="0.1524" layer="91"/>
+<junction x="-22.86" y="101.6"/>
+<pinref part="GND12" gate="1" pin="GND"/>
+</segment>
 </net>
 <net name="VCC" class="0">
 <segment>
@@ -4889,6 +4903,8 @@ lower than in bipolar regulators).</description>
 <pinref part="U1" gate="U1" pin="PB6(XTAL1/TOSC1)"/>
 <pinref part="Q1" gate="G$1" pin="2"/>
 <wire x1="-12.7" y1="106.68" x2="-15.24" y2="106.68" width="0.1524" layer="91"/>
+<pinref part="C15" gate="G$1" pin="2"/>
+<junction x="-15.24" y="106.68"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -4896,6 +4912,8 @@ lower than in bipolar regulators).</description>
 <pinref part="U1" gate="U1" pin="PB7(XTAL2/TOSC2)"/>
 <pinref part="Q1" gate="G$1" pin="1"/>
 <wire x1="-12.7" y1="101.6" x2="-15.24" y2="101.6" width="0.1524" layer="91"/>
+<pinref part="C14" gate="G$1" pin="2"/>
+<junction x="-15.24" y="101.6"/>
 </segment>
 </net>
 <net name="N$4" class="0">
