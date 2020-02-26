@@ -1,6 +1,7 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 #include <Bounce2.h>
+#include "MenuItem.h"
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
@@ -14,18 +15,29 @@ int menuNumber = 0;
 bool editing = false;
 int currentCursorPos = 0;
 
-float yIntercept = 72.413;
-float slope = 0.165;
-float inputAttenuation = 50.0;
-  
-float currentMenuVal = 0;
-
 int referenceVoltagePin = A0;
 int forwardVoltagePin = A1;
 int reflectedVoltagePin = A3;
 int sampleHoldPin = A2;
 int editButton = 7;
 Bounce dbEdit = Bounce();
+
+static char menu1[]  = "Input Atten";
+static char menu2[]  = "Slope";
+static char menu3[]  = "Y Intercept";
+
+float yIntercept = 72.413;
+float slope = 0.165;
+float inputAttenuation = 50.0;
+float currentMenuVal = 0;
+
+MenuItem menu[3] =
+{
+  MenuItem( menu1, &inputAttenuation, 3, 3 ),
+  MenuItem( menu2, &slope, 3, 3 ),
+  MenuItem( menu3, &yIntercept, 3, 3 )
+};
+
 
 static int pinA = 2; // Our first hardware interrupt pin is digital pin 2
 static int pinB = 3; // Our second hardware interrupt pin is digital pin 3
@@ -91,13 +103,16 @@ void loop()
     else if ( somethingChanged )
         displayMenu();
     
-    delay( 50 );
+    //delay( 50 );
 }
 
 bool checkEncoderChanged()
 {
+    if ( oldEncoderPos == encoderPos )
+      return false;
+      
     if ( menuDepth == 0 )
-      changeWattmeter()
+      changeWattmeter();
     else if ( menuDepth == 1 )
     {
       if ( !editing )
@@ -106,9 +121,8 @@ bool checkEncoderChanged()
         changeMenuItem();
     }
     
-    bool changed = oldEncoderPos != encoderPos;
     oldEncoderPos = encoderPos;
-    return changed;
+    return true;
 }
 
 void changeWattmeter()
@@ -130,6 +144,33 @@ void changeMenu()
 
 void changeMenuItem()
 {
+  char buf[20];
+  
+  int intPortion = (int) currentMenuVal;
+  int floatPortion = abs( ( currentMenuVal - (float)intPortion ) * 1000 );
+  sprintf( buf, "%03d.%03d", intPortion, floatPortion );
+
+  int dir = encoderPos > oldEncoderPos ? 1 : -1;
+
+  char c;
+  int bufpos = currentCursorPos;
+  
+  if ( currentCursorPos < 3 )
+  {
+    buf[bufpos] += dir;
+  }
+  else
+  {
+    ++bufpos;
+    buf[bufpos] += dir;
+  }
+
+  if ( buf[bufpos] < '0' )
+    buf[bufpos] = '9';
+  else if ( buf[bufpos] > '9' )
+    buf[bufpos] = '0';
+  
+  currentMenuVal = String( buf ).toFloat() + .0005;
   
 }
 
@@ -147,8 +188,15 @@ void editPressed()
   else if ( currentCursorPos < CURSOR_MAX )
     currentCursorPos++; 
   else
+  {
     editing = false;
-    
+   if ( menuNumber == 0 )
+      inputAttenuation = currentMenuVal;
+   else if ( menuNumber == 1 )
+      slope = currentMenuVal;
+   else
+      yIntercept = currentMenuVal;
+  } 
 }
 
 void encoderPressed()
@@ -157,6 +205,13 @@ void encoderPressed()
   
   if ( menuDepth == 0 )
     menuDepth = 1;
+  else
+  {
+    menuDepth = 0;
+    currentCursorPos = 0;
+    menuNumber = 0;
+    lcd.noBlink();
+  }
 }
 
 void displayMenu()
