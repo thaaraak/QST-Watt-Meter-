@@ -12,7 +12,18 @@ class MenuItem
  public:
 
      MenuItem( const char *menuname, float *value, int intpos, int floatpos );
-    
+
+     char* getMenuName();
+     float* getValue();
+     void setValue( float v );
+
+     float getMenuValue( char buf[] );
+     void getMenuValue( char buf[], float v );
+     void changeMenuItem( char buf[], int bufpos, int dir );
+
+     int getIntpos();
+     int getTotalpos();
+     
  protected:
  private:
 
@@ -20,6 +31,7 @@ class MenuItem
      float* _value;
      int    _intpos;
      int    _floatpos;
+     char   _formatString[10];
 };
 
 #endif

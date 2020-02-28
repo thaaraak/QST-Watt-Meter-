@@ -6,8 +6,7 @@
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 #define START_MENU_POS 5
-#define CURSOR_MAX 5
-#define MAX_MENU 3
+#define MAX_MENU 5
 int menuDepth = 0;
 int menuEdit = 0;
 int menuNumber = 0;
@@ -25,17 +24,25 @@ Bounce dbEdit = Bounce();
 static char menu1[]  = "Input Atten";
 static char menu2[]  = "Slope";
 static char menu3[]  = "Y Intercept";
+static char menu4[]  = "Slope (R)";
+static char menu5[]  = "Y Intercept (R)";
+
+static char mprefix[] = "pnum k";
 
 float yIntercept = 72.413;
 float slope = 0.165;
-float inputAttenuation = 50.0;
+float yInterceptR = 70.938;
+float slopeR = 0.164;
+float inputAttenuation = 0.0;
 float currentMenuVal = 0;
 
-MenuItem menu[3] =
+MenuItem menu[5] =
 {
-  MenuItem( menu1, &inputAttenuation, 3, 3 ),
+  MenuItem( menu1, &inputAttenuation, 2, 1 ),
   MenuItem( menu2, &slope, 3, 3 ),
-  MenuItem( menu3, &yIntercept, 3, 3 )
+  MenuItem( menu3, &yIntercept, 3, 3 ),
+  MenuItem( menu4, &slopeR, 3, 3 ),
+  MenuItem( menu5, &yInterceptR, 3, 3 )
 };
 
 
@@ -50,6 +57,7 @@ volatile byte reading = 0; //somewhere to store the direct values we read from o
 
 volatile int encoderPos = 0;
 volatile int oldEncoderPos = 0;
+volatile int encoderDirection;
 
 
 void setup() 
@@ -110,6 +118,8 @@ bool checkEncoderChanged()
 {
     if ( oldEncoderPos == encoderPos )
       return false;
+
+    encoderDirection = encoderPos > oldEncoderPos ? 1 : -1;
       
     if ( menuDepth == 0 )
       changeWattmeter();
@@ -131,9 +141,11 @@ void changeWattmeter()
 
 void changeMenu()
 {
-    if ( encoderPos > oldEncoderPos )
+    lcd.clear();
+
+    if ( encoderDirection > 0 )
       menuNumber++;
-    else if ( encoderPos < oldEncoderPos )
+    else
       menuNumber--;
 
     if ( menuNumber < 0 )
@@ -145,33 +157,12 @@ void changeMenu()
 void changeMenuItem()
 {
   char buf[20];
+  MenuItem m = menu[menuNumber];
   
-  int intPortion = (int) currentMenuVal;
-  int floatPortion = abs( ( currentMenuVal - (float)intPortion ) * 1000 );
-  sprintf( buf, "%03d.%03d", intPortion, floatPortion );
-
-  int dir = encoderPos > oldEncoderPos ? 1 : -1;
-
-  char c;
-  int bufpos = currentCursorPos;
-  
-  if ( currentCursorPos < 3 )
-  {
-    buf[bufpos] += dir;
-  }
-  else
-  {
-    ++bufpos;
-    buf[bufpos] += dir;
-  }
-
-  if ( buf[bufpos] < '0' )
-    buf[bufpos] = '9';
-  else if ( buf[bufpos] > '9' )
-    buf[bufpos] = '0';
-  
-  currentMenuVal = String( buf ).toFloat() + .0005;
-  
+  m.getMenuValue( buf, currentMenuVal );
+  m.changeMenuItem( buf, currentCursorPos, encoderDirection );
+  currentMenuVal = m.getMenuValue( buf );
+ 
 }
 
 
@@ -179,23 +170,21 @@ void editPressed()
 {
   if ( menuDepth == 0 )
     return;
-    
+
+  MenuItem m = menu[menuNumber];
+
   if (!editing )
   {
     editing = true;
     currentCursorPos = 0;
   }
-  else if ( currentCursorPos < CURSOR_MAX )
+  else if ( currentCursorPos < m.getTotalpos()-1 )
     currentCursorPos++; 
   else
   {
     editing = false;
-   if ( menuNumber == 0 )
-      inputAttenuation = currentMenuVal;
-   else if ( menuNumber == 1 )
-      slope = currentMenuVal;
-   else
-      yIntercept = currentMenuVal;
+    MenuItem m = menu[menuNumber];
+    m.setValue( currentMenuVal );
   } 
 }
 
@@ -216,56 +205,28 @@ void encoderPressed()
 
 void displayMenu()
 {
-   if ( menuNumber == 0 )
-      displayAttenuation();
-   else if ( menuNumber == 1 )
-      displayParam1();
-   else
-      displayParam2();
-}
-
-void displayAttenuation()
-{
+  MenuItem m = menu[menuNumber];
+  
   lcd.setCursor( 0, 0 );
-  lcd.print( "Input Atten     " );
+  lcd.print( m.getMenuName() );
 
   if ( !editing )
-    currentMenuVal = inputAttenuation;
-  displayMenuValue();
+    currentMenuVal = *m.getValue();
+  displayMenuValue(m);
 }
 
-void displayParam1()
-{
-  lcd.setCursor( 0, 0 );
-  lcd.print( "Slope           " );
-  if ( !editing )
-    currentMenuVal = slope;
-  displayMenuValue();
-}
-
-void displayParam2()
-{
-  lcd.setCursor( 0, 0 );
-  lcd.print( "Y Intercept     " );
-  if ( !editing )
-    currentMenuVal = yIntercept;
-  displayMenuValue();
-}
-
-void displayMenuValue()
+void displayMenuValue( MenuItem m )
 {
   char buf[20];
-  
-  int intPortion = (int) currentMenuVal;
-  int floatPortion = abs( ( currentMenuVal - (float)intPortion ) * 1000 );
-  sprintf( buf, "%03d.%03d", intPortion, floatPortion );
+
+  m.getMenuValue( buf, currentMenuVal );
   lcd.setCursor( START_MENU_POS, 1 );
   lcd.print( buf );
 
   if ( editing )
   {
     int pos = currentCursorPos;
-    if ( pos > 2 )
+    if ( pos > m.getIntpos()-1 )
       pos++;
     lcd.setCursor( START_MENU_POS + pos, 1 );
     lcd.blink();
@@ -279,34 +240,42 @@ void displayWattmeter()
 {
   char buf[20];
 
-
   int referenceVoltage = analogRead(referenceVoltagePin);
-/*
-  sprintf( buf, "R: %3d", referenceVoltage );
-  lcd.setCursor(7,1);
-  lcd.print( buf );
-*/
+
   int reflectedVoltage = analogRead(reflectedVoltagePin) - referenceVoltage + 512;
-  sprintf( buf, "R: %3d", reflectedVoltage );
-  lcd.setCursor(0,0);
-  lcd.print( buf );
-
+  float reflecteddbm = (float) reflectedVoltage * slopeR - yInterceptR + inputAttenuation;
+  
   int forwardVoltage = analogRead(forwardVoltagePin) - referenceVoltage + 512;
-  sprintf( buf, "F: %3d", forwardVoltage );
-  lcd.setCursor(0,1);
-  lcd.print( buf );
+  float forwarddbm = (float) forwardVoltage * slope - yIntercept + inputAttenuation;
 
-  printdbm( forwardVoltage, 7, 1 );
-  printdbm( reflectedVoltage, 7, 0 );
+  printWatts( reflecteddbm, 0, 0 );
+  printWatts( forwarddbm, 0, 1 );
+
+  printdbm( forwarddbm, 9, 1 );
+  printdbm( reflecteddbm, 9, 0 );
 }
 
-void printdbm( int v, int x, int y )
+void printWatts( float dbm, int x, int y )
+{
+  char buf[20];
+
+  int prefix = ( dbm + 90 ) / 30;
+  float remain = dbm - ( prefix * 30 - 90.0 );
+  remain = pow( 10, remain / 10.0 );
+
+  int intPortion = (int) remain;
+  int floatPortion = abs( ( remain - (float)intPortion ) * 10 );
+  sprintf( buf, "%3d.%01d %cW", intPortion, floatPortion, mprefix[prefix] );
+  lcd.setCursor( x, y );
+  lcd.print( buf );
+}
+
+void printdbm( float dbm, int x, int y )
 {
   char buf[20];
   
-  float dBm = (float)v * slope - yIntercept;
-  int intPortion = (int) dBm;
-  int floatPortion = abs( ( dBm - (float)intPortion ) * 10 );
+  int intPortion = (int) dbm;
+  int floatPortion = abs( ( dbm - (float)intPortion ) * 10 );
   sprintf( buf, "(%3d.%01d)", intPortion, floatPortion );
   lcd.setCursor( x, y );
   lcd.print( buf );
