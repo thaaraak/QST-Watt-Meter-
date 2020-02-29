@@ -78,7 +78,7 @@ void setup()
   attachInterrupt(0,PinA,RISING); // set an interrupt on PinA, looking for a rising edge signal and executing the "PinA" Interrupt Service Routine (below)
   attachInterrupt(1,PinB,RISING); // set an interrupt on PinB, looking for a rising edge signal and executing the "PinB" Interrupt Service Routine (below)
 
-  lcd.begin();
+  lcd.begin( 16, 2 );
   lcd.backlight();
   lcd.clear();
 }
