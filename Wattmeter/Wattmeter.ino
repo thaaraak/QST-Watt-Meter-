@@ -29,10 +29,10 @@ static char menu5[]  = "Y Intercept (R)";
 
 static char mprefix[] = "pnum k";
 
-float yIntercept = 72.413;
-float slope = 0.165;
-float yInterceptR = 70.938;
-float slopeR = 0.164;
+float yIntercept = 88.436;
+float slope = 0.196;
+float yInterceptR = 86.630;
+float slopeR = 0.194;
 float inputAttenuation = 0.0;
 float currentMenuVal = 0;
 
